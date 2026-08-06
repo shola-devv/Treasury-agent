@@ -1,0 +1,8 @@
+.env
+venv/
+__pycache__/
+*.pyc
+agent/decisions.jsonl
+node_modules/
+.next/
+dashboard/.env.local
