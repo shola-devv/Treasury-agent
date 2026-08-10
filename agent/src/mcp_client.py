@@ -83,3 +83,27 @@ class KeeperHubMCPClient:
         if "error" in result:
             raise RuntimeError(f"MCP tool error calling {name}: {result['error']}")
         return result.get("result", {})
+
+    @staticmethod
+    def extract_json(mcp_result: dict) -> dict:
+        """
+        MCP tool results come back as {"content": [{"type": "text", "text": "..."}], ...}
+        where the actual payload is a JSON STRING inside content[0]['text'], not a
+        plain dict. This unwraps it. Handles the plain-success case and the
+        "API call failed: 400 Bad Request - {...}" error-message case, where the
+        real JSON is embedded after some prefix text.
+        """
+        content = mcp_result.get("content", [])
+        if not content:
+            return mcp_result  # already flat, or empty — nothing to unwrap
+        text = content[0].get("text", "")
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            idx = text.find("{")
+            if idx != -1:
+                try:
+                    return json.loads(text[idx:])
+                except json.JSONDecodeError:
+                    pass
+            return {"success": False, "wouldRevert": True, "raw": text}

@@ -1,15 +1,22 @@
 """
-Treasury Sweep Agent — main loop.
+Treasury Disbursement Agent — main loop.
 
 Architecture, matching the hackathon's own framing:
   - The AGENT (this script + Groq) reasons and decides.
   - KEEPERHUB executes: simulate, then broadcast, with retries and an
     audit trail, via native MCP tool calls.
 
-Flow per inflow wallet, per cycle:
-  1. Read balance + current gas price directly from chain (chain_reader.py)
-  2. Ask Groq: sweep or hold, and why (reasoner.py)
-  3. If sweep:
+IMPORTANT MODEL, corrected from an earlier draft: KeeperHub can only sign
+transactions FROM its own Turnkey-managed org wallet (the treasury). It
+cannot sign from arbitrary wallets you hold private keys for. So the flow
+here is disbursement OUT of the treasury to payout wallets, not sweeping
+funds INTO the treasury from elsewhere.
+
+Flow per payout wallet, per cycle:
+  1. Read the treasury's live balance + current gas price (chain_reader.py)
+  2. Ask Groq: is paying this wallet's fixed disbursement amount worth the
+     gas right now, or should it hold? (reasoner.py)
+  3. If pay, and the treasury can afford it:
        a. call execute_transfer with simulate=true  (catch reverts, no signing)
        b. if simulation is clean, call execute_transfer for real with a
           unique idempotency_key
@@ -26,11 +33,22 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-from chain_reader import get_balance_eth, estimate_transfer_cost_eth
-from reasoner import decide
-from mcp_client import KeeperHubMCPClient
+# Load .env FIRST, before importing reasoner.py — reasoner.py reads
+# GROQ_API_KEY the moment it's imported (to build the Groq client), so the
+# .env file must already be loaded before that import happens. Explicit path
+# so this works regardless of which folder you run agent.py from.
+_ENV_PATH = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=_ENV_PATH)
 
-load_dotenv()
+if not os.environ.get("GROQ_API_KEY"):
+    raise SystemExit(
+        f"GROQ_API_KEY not found. Checked for a .env file at: {_ENV_PATH}\n"
+        f"Does that file exist? Does it contain a real GROQ_API_KEY=... line?"
+    )
+
+from chain_reader import get_balance_eth, estimate_transfer_cost_eth  # noqa: E402
+from reasoner import decide  # noqa: E402
+from mcp_client import KeeperHubMCPClient  # noqa: E402
 
 # One JSON object per line, appended to as the agent runs. The dashboard
 # reads this directly — it's the agent's own decision ledger, separate from
@@ -43,14 +61,16 @@ def log_decision(record: dict):
     with open(DECISIONS_LOG_PATH, "a") as f:
         f.write(json.dumps(record) + "\n")
 
+
 TREASURY_WALLET = os.environ["TREASURY_WALLET_ADDRESS"]
-INFLOW_WALLETS = [
-    os.environ["INFLOW_WALLET_1"],
-    os.environ["INFLOW_WALLET_2"],
-    os.environ["INFLOW_WALLET_3"],
+PAYOUT_WALLETS = [
+    os.environ["PAYOUT_WALLET_1"],
+    os.environ["PAYOUT_WALLET_2"],
+    os.environ["PAYOUT_WALLET_3"],
 ]
 CHAIN_ID = os.environ.get("CHAIN_ID", "11155111")  # Sepolia
-SWEEP_THRESHOLD_ETH = float(os.environ.get("SWEEP_THRESHOLD_ETH", "0.001"))
+DISBURSEMENT_AMOUNT_ETH = float(os.environ.get("DISBURSEMENT_AMOUNT_ETH", "0.002"))
+SWEEP_THRESHOLD_ETH = float(os.environ.get("SWEEP_THRESHOLD_ETH", "0.0005"))
 POLL_INTERVAL_SECONDS = int(os.environ.get("POLL_INTERVAL_SECONDS", "600"))
 
 STATUS_POLL_ATTEMPTS = 10
@@ -62,17 +82,18 @@ def log(message: str):
     print(f"[{ts}] {message}")
 
 
-def sweep_wallet(mcp: KeeperHubMCPClient, wallet: str, amount_eth: float):
-    """Simulate, then execute, a transfer from `wallet` to the treasury."""
+def pay_wallet(mcp: KeeperHubMCPClient, wallet: str, amount_eth: float):
+    """Simulate, then execute, a transfer from the treasury to `wallet`."""
     base_args = {
         "chain_id": CHAIN_ID,
-        "from_address": wallet,
-        "to_address": TREASURY_WALLET,
+        "from_address": TREASURY_WALLET,
+        "to_address": wallet,
         "amount": f"{amount_eth:.6f}",
     }
 
-    log(f"  Simulating sweep of {amount_eth:.6f} ETH from {wallet} ...")
-    sim = mcp.call_tool("execute_transfer", {**base_args, "simulate": True})
+    log(f"  Simulating payout of {amount_eth:.6f} ETH to {wallet} ...")
+    sim_raw = mcp.call_tool("execute_transfer", {**base_args, "simulate": True})
+    sim = KeeperHubMCPClient.extract_json(sim_raw)
     log(f"  Simulation result: {sim}")
 
     if not sim.get("success") or sim.get("wouldRevert"):
@@ -81,20 +102,26 @@ def sweep_wallet(mcp: KeeperHubMCPClient, wallet: str, amount_eth: float):
 
     idem_key = str(uuid.uuid4())
     log(f"  Executing real transfer (idempotency_key={idem_key}) ...")
-    exec_result = mcp.call_tool(
+    exec_raw = mcp.call_tool(
         "execute_transfer", {**base_args, "idempotency_key": idem_key}
     )
+    exec_result = KeeperHubMCPClient.extract_json(exec_raw)
     execution_id = exec_result.get("executionId") or exec_result.get("execution_id")
     log(f"  Submitted. execution_id={execution_id}")
 
     for attempt in range(STATUS_POLL_ATTEMPTS):
         time.sleep(STATUS_POLL_DELAY_SECONDS)
-        status = mcp.call_tool(
+        status_raw = mcp.call_tool(
             "get_direct_execution_status", {"execution_id": execution_id}
         )
+        status = KeeperHubMCPClient.extract_json(status_raw)
         state = status.get("status")
         log(f"  Poll {attempt + 1}: status={state}")
         if state in ("completed", "failed"):
+            tx_hash = status.get("transactionHash") or status.get("tx_hash")
+            if tx_hash:
+                log(f"  Confirmed. tx hash: {tx_hash}")
+                log(f"  https://sepolia.etherscan.io/tx/{tx_hash}")
             return status
 
     log("  Gave up polling after max attempts — check the KeeperHub dashboard.")
@@ -104,23 +131,22 @@ def sweep_wallet(mcp: KeeperHubMCPClient, wallet: str, amount_eth: float):
 def run_cycle(mcp: KeeperHubMCPClient):
     log("=== New cycle ===")
     gas_cost_eth = estimate_transfer_cost_eth()
+    treasury_balance = get_balance_eth(TREASURY_WALLET)
+    log(f"Treasury balance: {treasury_balance:.6f} ETH")
     log(f"Estimated transfer gas cost right now: {gas_cost_eth:.6f} ETH")
 
-    for wallet in INFLOW_WALLETS:
-        balance = get_balance_eth(wallet)
-        log(f"Wallet {wallet}: balance={balance:.6f} ETH")
-
+    for wallet in PAYOUT_WALLETS:
         result = decide(
             wallet_address=wallet,
-            balance_eth=balance,
+            disbursement_amount_eth=DISBURSEMENT_AMOUNT_ETH,
             gas_cost_eth=gas_cost_eth,
             threshold_eth=SWEEP_THRESHOLD_ETH,
         )
-        log(f"  Decision: {result['decision']} — {result['reasoning']}")
+        log(f"  {wallet}: {result['decision']} — {result['reasoning']}")
 
         record = {
             "wallet": wallet,
-            "balance_eth": balance,
+            "disbursement_amount_eth": DISBURSEMENT_AMOUNT_ETH,
             "gas_cost_eth": gas_cost_eth,
             "net_benefit_eth": result["net_benefit_eth"],
             "decision": result["decision"],
@@ -129,18 +155,20 @@ def run_cycle(mcp: KeeperHubMCPClient):
             "tx_hash": None,
         }
 
-        if result["decision"] == "sweep":
-            sweep_amount = balance - gas_cost_eth
-            if sweep_amount <= 0:
-                log("  Net amount after gas is non-positive — holding instead.")
+        if result["decision"] == "pay":
+            needed = DISBURSEMENT_AMOUNT_ETH + gas_cost_eth
+            if treasury_balance < needed:
+                log(f"  Treasury balance too low to cover this payout + gas — holding.")
                 record["decision"] = "hold"
-                record["reasoning"] += " (net amount after gas was non-positive.)"
+                record["reasoning"] += " (treasury balance insufficient this cycle.)"
                 log_decision(record)
                 continue
-            status = sweep_wallet(mcp, wallet, sweep_amount)
+            status = pay_wallet(mcp, wallet, DISBURSEMENT_AMOUNT_ETH)
             if status:
                 record["tx_status"] = status.get("status")
                 record["tx_hash"] = status.get("transactionHash") or status.get("tx_hash")
+                if status.get("status") == "completed":
+                    treasury_balance -= needed
             log_decision(record)
         else:
             log("  No action taken this cycle.")
@@ -152,9 +180,10 @@ def main():
     api_key = os.environ["KEEPERHUB_API_KEY"]
     mcp = KeeperHubMCPClient(mcp_url, api_key)
 
-    log("Treasury Sweep Agent started.")
+    log("Treasury Disbursement Agent started.")
     log(f"Treasury: {TREASURY_WALLET}")
-    log(f"Watching {len(INFLOW_WALLETS)} inflow wallets on chain {CHAIN_ID}")
+    log(f"Disbursement amount per wallet per cycle: {DISBURSEMENT_AMOUNT_ETH} ETH")
+    log(f"Watching {len(PAYOUT_WALLETS)} payout wallets on chain {CHAIN_ID}")
 
     while True:
         try:
