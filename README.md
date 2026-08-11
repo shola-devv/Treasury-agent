@@ -10,6 +10,7 @@ For every disbursement cycle, the agent reads the treasury balance and current n
 
 The system maintains an auditable decision log containing both successful payments and held payouts, including the reasoning behind each decision.
 
+**YouTube demo** https://youtu.be/uWtQdyf4ddo?si=qFKHrXNsNjyG_M5y
 ---
 
 ## Why This Exists
