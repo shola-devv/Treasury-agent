@@ -16,19 +16,31 @@ export default function SetupPage() {
   const [error, setError] = useState(null);
   const [loaded, setLoaded] = useState(false);
   const [showAgentKey, setShowAgentKey] = useState(false);
+  const [blankedWalletKeys, setBlankedWalletKeys] = useState({});
 
   useEffect(() => {
     fetch("/api/config")
       .then((r) => r.json())
       .then((data) => {
-        setValues(data.values ?? {});
+        const incoming = data.values ?? {};
+        setValues(incoming);
         setLoaded(true);
+        setBlankedWalletKeys((prev) => ({
+          ...prev,
+          ...(incoming.TREASURY_WALLET_ADDRESS ? { TREASURY_WALLET_ADDRESS: true } : {}),
+          ...(incoming.PAYOUT_WALLET_1 ? { PAYOUT_WALLET_1: true } : {}),
+          ...(incoming.PAYOUT_WALLET_2 ? { PAYOUT_WALLET_2: true } : {}),
+          ...(incoming.PAYOUT_WALLET_3 ? { PAYOUT_WALLET_3: true } : {}),
+        }));
       })
       .catch(() => setLoaded(true));
   }, []);
 
   function update(key, val) {
     setValues((prev) => ({ ...prev, [key]: val }));
+    if (blankedWalletKeys[key]) {
+      setBlankedWalletKeys((prev) => ({ ...prev, [key]: false }));
+    }
   }
 
   async function saveAndContinue() {
@@ -94,14 +106,20 @@ export default function SetupPage() {
             <div className="space-y-5">
               {group.fields
                 .filter((field) => !(step === 1 && field.key === "GROQ_API_KEY"))
-                .map((field) => (
-                  <Field
-                    key={field.key}
-                    field={field}
-                    value={values[field.key]}
-                    onChange={update}
-                  />
-                ))}
+                .map((field) => {
+                  const isBlankedWallet =
+                    step === 2 &&
+                    ["TREASURY_WALLET_ADDRESS", "PAYOUT_WALLET_1", "PAYOUT_WALLET_2", "PAYOUT_WALLET_3"].includes(field.key) &&
+                    blankedWalletKeys[field.key];
+                  return (
+                    <Field
+                      key={field.key}
+                      field={field}
+                      value={isBlankedWallet ? "" : values[field.key] ?? ""}
+                      onChange={update}
+                    />
+                  );
+                })}
 
               {step === 1 && customAgentField && (
                 <div className="rounded-4xl border border-ink/10 bg-cream/80 p-4">
@@ -113,6 +131,9 @@ export default function SetupPage() {
                     <span>Add custom agent API key</span>
                     <span className="text-ink/70">{showAgentKey ? "−" : "+"}</span>
                   </button>
+                  <p className="mt-3 text-sm text-clay">
+                    Go to KeeperHub dashboard and add an API key, then paste it here.
+                  </p>
 
                   {showAgentKey && (
                     <div className="mt-4">
