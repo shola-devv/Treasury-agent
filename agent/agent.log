@@ -1,0 +1,33 @@
+[2026-08-10T23:49:39+00:00] Treasury Disbursement Agent started.
+[2026-08-10T23:49:39+00:00] Treasury: 0x56856EE266311013aA477a44445CD45610ae4db0
+[2026-08-10T23:49:39+00:00] Disbursement amount per wallet per cycle: 0.002 ETH
+[2026-08-10T23:49:39+00:00] Watching 3 payout wallets on chain 11155111
+[2026-08-10T23:49:39+00:00] === New cycle ===
+[2026-08-10T23:49:40+00:00] Treasury balance: 0.532000 ETH
+[2026-08-10T23:49:40+00:00] Estimated transfer gas cost right now: 0.000021 ETH
+[2026-08-10T23:49:41+00:00]   0x2941638ce3DE7A53E3ad37E63B5c394DC9dd319e: pay — The net benefit if paid now is 0.001979 ETH, which exceeds the minimum net benefit threshold of 0.000500 ETH.
+[2026-08-10T23:49:41+00:00]   Simulating payout of 0.002000 ETH to 0x2941638ce3DE7A53E3ad37E63B5c394DC9dd319e ...
+[2026-08-10T23:49:42+00:00]   Simulation result: {'success': True, 'status': 'simulated', 'from': '0x56856ee266311013aa477a44445cd45610ae4db0', 'to': '0x2941638ce3DE7A53E3ad37E63B5c394DC9dd319e', 'value': '2000000000000000', 'gasEstimate': '21000', 'simulatedReturnValue': None, 'wouldRevert': False}
+[2026-08-10T23:49:42+00:00]   Executing real transfer (idempotency_key=d53c8cb4-b39d-499b-afa2-e8c1dc452013) ...
+[2026-08-10T23:49:51+00:00]   Submitted. execution_id=2wssjufjrdy819et1cm6f
+[2026-08-10T23:49:55+00:00]   Poll 1: status=completed
+[2026-08-10T23:49:55+00:00]   Confirmed. tx hash: 0xa09bbfcbffbc3421ea024f1f6b7510d327c0e026be159e2d34cf9682befb985d
+[2026-08-10T23:49:55+00:00]   https://sepolia.etherscan.io/tx/0xa09bbfcbffbc3421ea024f1f6b7510d327c0e026be159e2d34cf9682befb985d
+[2026-08-10T23:49:55+00:00]   0xEca0b09889F252867BCDaF05325d7aEFe4D7Fdf4: pay — The net benefit if paid now is 0.001979 ETH, which exceeds the minimum net benefit threshold of 0.000500 ETH.
+[2026-08-10T23:49:55+00:00]   Simulating payout of 0.002000 ETH to 0xEca0b09889F252867BCDaF05325d7aEFe4D7Fdf4 ...
+[2026-08-10T23:49:57+00:00]   Simulation result: {'success': True, 'status': 'simulated', 'from': '0x56856ee266311013aa477a44445cd45610ae4db0', 'to': '0xEca0b09889F252867BCDaF05325d7aEFe4D7Fdf4', 'value': '2000000000000000', 'gasEstimate': '21000', 'simulatedReturnValue': None, 'wouldRevert': False}
+[2026-08-10T23:49:57+00:00]   Executing real transfer (idempotency_key=ecc62c68-4907-4048-b8b5-36f500e49055) ...
+[2026-08-10T23:50:15+00:00]   Submitted. execution_id=eb4abrdka17wkto5k64oo
+[2026-08-10T23:50:19+00:00]   Poll 1: status=completed
+[2026-08-10T23:50:19+00:00]   Confirmed. tx hash: 0x3d2fdf95782d93588d91ca087f3f6cf2797ce4c5fcfb254297af800325f87b92
+[2026-08-10T23:50:19+00:00]   https://sepolia.etherscan.io/tx/0x3d2fdf95782d93588d91ca087f3f6cf2797ce4c5fcfb254297af800325f87b92
+[2026-08-10T23:50:19+00:00]   0x8C7a9015D27350A1D56E4A5a1C52318Da0Cc4B03: pay — The net benefit if paid now is 0.001979 ETH, which exceeds the minimum net benefit threshold of 0.000500 ETH.
+[2026-08-10T23:50:19+00:00]   Simulating payout of 0.002000 ETH to 0x8C7a9015D27350A1D56E4A5a1C52318Da0Cc4B03 ...
+[2026-08-10T23:50:21+00:00]   Simulation result: {'success': True, 'status': 'simulated', 'from': '0x56856ee266311013aa477a44445cd45610ae4db0', 'to': '0x8C7a9015D27350A1D56E4A5a1C52318Da0Cc4B03', 'value': '2000000000000000', 'gasEstimate': '21000', 'simulatedReturnValue': None, 'wouldRevert': False}
+[2026-08-10T23:50:21+00:00]   Executing real transfer (idempotency_key=00126c05-a017-4b80-a5f0-93fe9fe0c711) ...
+[2026-08-10T23:50:41+00:00]   Submitted. execution_id=hkny22ulagyfnmg0zlk7p
+[2026-08-10T23:50:44+00:00]   Poll 1: status=completed
+[2026-08-10T23:50:44+00:00]   Confirmed. tx hash: 0xd35706450bb615cb0e9d393d69bb141444e05a2cd3952f81a1ebf3178935bfe5
+[2026-08-10T23:50:44+00:00]   https://sepolia.etherscan.io/tx/0xd35706450bb615cb0e9d393d69bb141444e05a2cd3952f81a1ebf3178935bfe5
+[2026-08-10T23:50:44+00:00] Sleeping 600s until next cycle.
+

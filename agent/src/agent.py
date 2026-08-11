@@ -54,12 +54,21 @@ from mcp_client import KeeperHubMCPClient  # noqa: E402
 # reads this directly — it's the agent's own decision ledger, separate from
 # (and a nice complement to) KeeperHub's own execution audit trail.
 DECISIONS_LOG_PATH = Path(__file__).resolve().parent.parent / "decisions.jsonl"
+LOG_PATH = Path(__file__).resolve().parent.parent / "agent.log"
 
 
 def log_decision(record: dict):
     record["logged_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    with open(DECISIONS_LOG_PATH, "a") as f:
+    with open(DECISIONS_LOG_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps(record) + "\n")
+
+
+def log(message: str):
+    ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    line = f"[{ts}] {message}"
+    print(line, flush=True)
+    with open(LOG_PATH, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
 
 
 TREASURY_WALLET = os.environ["TREASURY_WALLET_ADDRESS"]
@@ -75,11 +84,6 @@ POLL_INTERVAL_SECONDS = int(os.environ.get("POLL_INTERVAL_SECONDS", "600"))
 
 STATUS_POLL_ATTEMPTS = 10
 STATUS_POLL_DELAY_SECONDS = 3
-
-
-def log(message: str):
-    ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
-    print(f"[{ts}] {message}")
 
 
 def pay_wallet(mcp: KeeperHubMCPClient, wallet: str, amount_eth: float):

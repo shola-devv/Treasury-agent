@@ -5,4 +5,5 @@ __pycache__/
 agent/decisions.jsonl
 node_modules/
 .next/
+agent/.env
 dashboard/.env.local

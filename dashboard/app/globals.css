@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #FBF4E9;
+  color: #2B2420;
+}
+
+::selection {
+  background: #EFCE93;
+  color: #2B2420;
+}
+
+*:focus-visible {
+  outline: 2px solid #9C7222;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.bg-hero {
+  background-image:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 250, 250, 0.85) 14%, rgba(245, 245, 245, 0.55) 24%, transparent 34%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 42%, rgba(0, 0, 0, 0.7) 48%, rgba(0, 0, 0, 0.88) 58%, rgba(0, 0, 0, 0.98) 75%, rgba(0, 0, 0, 1) 100%),
+    url("/background.jpg"),
+    radial-gradient(60% 50% at 20% 15%, rgba(239, 206, 147, 0.55), transparent 60%),
+    radial-gradient(55% 45% at 85% 10%, rgba(179, 120, 154, 0.35), transparent 60%),
+    radial-gradient(70% 60% at 50% 100%, rgba(143, 174, 121, 0.5), transparent 65%);
+  background-size: cover, cover, cover, auto, auto, auto;
+  background-position: center, center, center -5%, center, center, center;
+  background-repeat: no-repeat;
+  background-blend-mode: normal, normal, normal, normal, normal, normal;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.workflow-loader {
+  position: relative;
+  width: 1.6rem;
+  height: 1.6rem;
+  min-width: 1.6rem;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 0.75rem;
+  padding: 0.2rem;
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.02), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+  animation: workflow-shape 4s ease-in-out infinite;
+}
+
+.workflow-dot {
+  position: absolute;
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.workflow-dot.workflow-dot-1 {
+  top: 0.18rem;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: workflow-dot-1 4s ease-in-out infinite;
+}
+
+.workflow-dot.workflow-dot-2 {
+  right: 0.18rem;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: workflow-dot-2 4s ease-in-out infinite;
+}
+
+.workflow-dot.workflow-dot-3 {
+  bottom: 0.18rem;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: workflow-dot-3 4s ease-in-out infinite;
+}
+
+.workflow-dot.workflow-dot-4 {
+  left: 0.18rem;
+  top: 50%;
+  transform: translateY(-50%);
+  animation: workflow-dot-4 4s ease-in-out infinite;
+}
+
+@keyframes workflow-shape {
+  0%, 100% {
+    border-radius: 1.25rem;
+    background: rgba(255, 255, 255, 0.05);
+  }
+  33% {
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  66% {
+    border-radius: 0.45rem;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes workflow-dot-1 {
+  0%, 100% { top: 0.35rem; left: 50%; transform: translateX(-50%); }
+  25% { top: 0.35rem; left: 0.35rem; transform: translate(0,0); }
+  50% { top: 50%; left: 0.35rem; transform: translateY(-50%); }
+  75% { top: 50%; left: 50%; transform: translate(-50%, -50%); }
+}
+
+@keyframes workflow-dot-2 {
+  0%, 100% { right: 0.35rem; top: 50%; transform: translateY(-50%); }
+  25% { right: 50%; top: 0.35rem; transform: translate(50%,0); }
+  50% { right: 0.35rem; top: 0.35rem; transform: translate(0,0); }
+  75% { right: 0.35rem; top: 50%; transform: translateY(-50%); }
+}
+
+@keyframes workflow-dot-3 {
+  0%, 100% { bottom: 0.35rem; left: 50%; transform: translateX(-50%); }
+  25% { bottom: 0.35rem; left: 50%; transform: translateX(-50%); }
+  50% { bottom: 0.35rem; left: 0.35rem; transform: translate(0,0); }
+  75% { bottom: 50%; left: 0.35rem; transform: translate(0,50%); }
+}
+
+@keyframes workflow-dot-4 {
+  0%, 100% { left: 0.35rem; top: 50%; transform: translateY(-50%); }
+  25% { left: 0.35rem; top: 50%; transform: translateY(-50%); }
+  50% { left: 50%; top: 0.35rem; transform: translate(-50%,0); }
+  75% { left: 0.35rem; top: 0.35rem; transform: translate(0,0); }
+}
