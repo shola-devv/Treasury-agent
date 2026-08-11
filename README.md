@@ -24,35 +24,3 @@ treasury-sweep-agent/
 └── dashboard/             ← NOT built yet — next step
 ```
 
-## Status
-
-- [x] Agent reasoning loop (Groq)
-- [x] KeeperHub MCP execution client (simulate → execute → poll)
-- [x] Local decision ledger for the dashboard to read
-- [ ] **First live run against KeeperHub — needs debugging, see SETUP.md step 8**
-- [ ] Dashboard
-- [ ] Demo video
-
-## What's next: the dashboard
-
-Once the agent runs cleanly end to end at least once, the dashboard is the
-last major piece. Its job is narrow and specific: make the reasoning
-visible, since that's the project's actual differentiator.
-
-**Planned stack:** a small Next.js app (or plain HTML if you want zero
-build tooling) with two data sources:
-1. `agent/decisions.jsonl` — the agent's own reasoning ledger (read via a
-   tiny local API endpoint, or a static JSON fetch during the demo)
-2. KeeperHub's `/api/executions` REST endpoint — the *official* audit trail,
-   so you can show the two side by side and prove you're not just making up
-   your own logs
-
-**Planned screens:**
-- Current balances across the 3 inflow wallets + treasury
-- Live decision feed: timestamp, wallet, decision, reasoning, tx hash (linked
-  to Sepolia Etherscan) if one exists
-- A "run agent now" trigger for the live demo, if time allows — otherwise a
-  refresh button that re-reads the log
-
-Say the word when you're ready and I'll scaffold it the same way we did the
-agent.
