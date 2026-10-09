@@ -1,6 +1,6 @@
 # Treasury Disbursement Agent
 
-> **An AI-powered treasury agent that decides when recurring payouts are economically worth executing, then uses KeeperHub to simulate, execute, and verify the transaction.**
+> **An AI-powered etherum blockchain treasury agent  that decides when recurring payouts are economically worth executing, then uses KeeperHub to simulate, execute, and verify the transaction.**
 
 **Treasury Disbursement Agent** is an autonomous treasury management system built around a simple idea:
 
